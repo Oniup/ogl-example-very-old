@@ -1,1 +1,1 @@
-# survival game
+# Oniup's Graphics Library Example

@@ -1,7 +1,7 @@
 del *.vcxproj
 del *.vcxproj.filters
 del *.vcxproj.user
-del game.sln
+del example_project.sln
 
 del ogl\*.vcxproj
 del ogl\*.vcxproj.filters
@@ -19,7 +19,7 @@ rmdir /s /q %cd%\ogl\CMakeFiles
 rmdir /s /q %cd%\x64
 rmdir /s /q %cd%\Debug
 rmdir /s /q %cd%\.vs
-rmdir /s /q %cd%\game.dir
+rmdir /s /q %cd%\example_project.dir
 
 rmdir /s /q %cd%\ogl\Debug
 rmdir /s /q %cd%\ogl\ogl.dir

@@ -75,7 +75,7 @@ App::App() : ogl::Application() {
 
 	ogl::Pipeline::get()->push_renderer(new ogl::BasicRenderer());
 
-	ogl::AssetHandler::get()->load_texture_into_memory("container", "project/assets/textures/container.png"); // TODO(Ewan): still need to test whether it actually works
+	ogl::AssetHandler::get()->load_texture_into_memory("container", "example/assets/textures/container.png"); // TODO(Ewan): still need to test whether it actually works
 
 	ogl::SceneManager::get()->push("empty scene");
 	ogl::SceneManager::get()->set_active("empty scene");

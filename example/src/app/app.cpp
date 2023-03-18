@@ -75,17 +75,13 @@ App::App() : ogl::Application() {
 
 	ogl::Pipeline::get()->push_renderer(new ogl::BasicRenderer());
 
-	ogl::AssetHandler::get()->load_texture_into_memory("container", "example/assets/textures/container.png"); // TODO(Ewan): still need to test whether it actually works
+	ogl::Texture* texture = ogl::AssetHandler::get()->load_texture_into_memory("container", "example/assets/textures/container.png");
+	ogl::Material* material = ogl::AssetHandler::get()->load_material_into_memory("container");
+	material->textures.push_back(std::make_tuple(texture, ogl::MaterialTextureType_Diffuse));
 
 	ogl::SceneManager::get()->push("empty scene");
 	ogl::SceneManager::get()->set_active("empty scene");
 	ogl::Scene* scene = ogl::SceneManager::get()->get_active_scene();
-
-	entt::entity cube = scene->get_registry().create();
-	ogl::TransformComponent& cube_transform = scene->get_registry().emplace<ogl::TransformComponent>(cube);
-	ogl::ModelRendererComponent& cube_model_renderer = scene->get_registry().emplace<ogl::ModelRendererComponent>(cube);
-	cube_model_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/cube", ogl::ModelFileType_Obj);
-	cube_transform.position.z = -5.0f;
 
 	entt::entity camera = scene->get_registry().create();
 	ogl::CameraComponent& camera_comp = scene->get_registry().emplace<ogl::CameraComponent>(camera);
@@ -94,6 +90,14 @@ App::App() : ogl::Application() {
 	camera_comp.projection_matrix = glm::perspective(
 		glm::radians(45.0f), static_cast<float>(window_layer->get_width()) / static_cast<float>(window_layer->get_height()), 0.1f, 100.0f
 	);
+	camera_comp.clear_color = glm::vec4(0.2f, 0.5f, 0.9f, 1.0f);
+
+	entt::entity backpack = scene->get_registry().create();
+	ogl::TransformComponent& backpack_transform = scene->get_registry().emplace<ogl::TransformComponent>(backpack);
+	ogl::ModelRendererComponent& backpack_model_renderer = scene->get_registry().emplace<ogl::ModelRendererComponent>(backpack);
+	backpack_model_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("example/assets/models/backpack", ogl::ModelFileType_Obj);
+	backpack_transform.rotation = glm::vec4(0.0f, 1.0f, 0.0f, -90.0f);
+	backpack_transform.position.x = 4.0f;
 
 	ogl::SceneManager::get()->get_active_scene()->push_system<BasicCameraController>(camera_comp);
 }

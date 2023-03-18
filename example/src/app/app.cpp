@@ -74,10 +74,9 @@ App::App() : ogl::Application() {
 	ogl::Window* window_layer = static_cast<ogl::Window*>(get_layer(OGL_RENDERER_WINDOW_LAYER_NAME));
 
 	ogl::Pipeline::get()->push_renderer(new ogl::BasicRenderer());
+	ogl::Pipeline::get()->set_render_mode(ogl::PipelineRenderMode_WireFrame);
 
 	ogl::Texture* texture = ogl::AssetHandler::get()->load_texture_into_memory("container", "example/assets/textures/container.png");
-	ogl::Material* material = ogl::AssetHandler::get()->load_material_into_memory("container");
-	material->textures.push_back(std::make_tuple(texture, ogl::MaterialTextureType_Diffuse));
 
 	ogl::SceneManager::get()->push("empty scene");
 	ogl::SceneManager::get()->set_active("empty scene");
@@ -97,7 +96,16 @@ App::App() : ogl::Application() {
 	ogl::ModelRendererComponent& backpack_model_renderer = scene->get_registry().emplace<ogl::ModelRendererComponent>(backpack);
 	backpack_model_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("example/assets/models/backpack", ogl::ModelFileType_Obj);
 	backpack_transform.rotation = glm::vec4(0.0f, 1.0f, 0.0f, -90.0f);
-	backpack_transform.position.x = 4.0f;
+	backpack_transform.position.x = 8.0f;
+	backpack_transform.position.z = -2.0f;
+
+	entt::entity cube = scene->get_registry().create();
+	ogl::TransformComponent& cube_transform = scene->get_registry().emplace<ogl::TransformComponent>(cube);
+	ogl::ModelRendererComponent& cube_model_renderer = scene->get_registry().emplace<ogl::ModelRendererComponent>(cube);
+	cube_model_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/cube", ogl::ModelFileType_Obj);
+	cube_model_renderer.model->meshes[0].material->textures.push_back(std::make_tuple(texture, ogl::MaterialTextureType_Diffuse));
+	cube_transform.position.x = 8.0f;
+	cube_transform.position.z = 2.0f;
 
 	ogl::SceneManager::get()->get_active_scene()->push_system<BasicCameraController>(camera_comp);
 }

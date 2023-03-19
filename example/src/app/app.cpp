@@ -56,8 +56,8 @@ public:
 
 private:
 	ogl::CameraComponent* m_camera{ nullptr };
-	float m_move_speed{ 5.0f };
-	float m_sensitivity{ 0.1f };
+	float m_move_speed{ 10.0f };
+	float m_sensitivity{ 0.05f };
 	float m_yaw{ 0.0f };
 	float m_pitch{ 0.0f };
 
@@ -71,8 +71,7 @@ App::App() : ogl::Application() {
 	ogl::Pipeline::get()->push_renderer(new ogl::BasicRenderer());
 
 	ogl::SceneManager::get()->push("empty scene");
-	ogl::SceneManager::get()->set_active("empty scene");
-	ogl::Scene* scene = ogl::SceneManager::get()->get_active_scene();
+	ogl::Scene* scene = ogl::SceneManager::get()->set_active("empty scene");
 
 	entt::entity camera = scene->get_registry().create();
 	ogl::CameraComponent& camera_comp = scene->get_registry().emplace<ogl::CameraComponent>(camera);
@@ -81,7 +80,9 @@ App::App() : ogl::Application() {
 	camera_comp.projection_matrix = glm::perspective(
 		glm::radians(45.0f), static_cast<float>(window_layer->get_width()) / static_cast<float>(window_layer->get_height()), 0.1f, 100.0f
 	);
-	camera_comp.clear_color = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	camera_comp.clear_color = glm::vec4(0.05f, 0.1f, 0.2f, 1.0f);
+
+	scene->push_system<BasicCameraController>(camera_comp);
 
 	entt::entity backpack = scene->get_registry().create();
 	ogl::TransformComponent& backpack_transform = scene->get_registry().emplace<ogl::TransformComponent>(backpack);
@@ -91,38 +92,56 @@ App::App() : ogl::Application() {
 	backpack_transform.position.x = 8.0f;
 	backpack_transform.position.z = -2.0f;
 
+	for (ogl::Mesh& mesh : backpack_mesh_renderer.model->meshes) {
+		mesh.material->shininess = 32;
+		mesh.material->specular_strength = 2.0f;
+	}
+
 	entt::entity sphere = scene->get_registry().create();
 	ogl::TransformComponent& sphere_transform = scene->get_registry().emplace<ogl::TransformComponent>(sphere);
 	ogl::MeshRendererComponent& sphere_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(sphere);
 	sphere_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/sphere", ogl::ModelFileType_Obj);
 	sphere_transform.position.x = 8.0f;
 	sphere_transform.position.z = 2.0f;
-	sphere_mesh_renderer.model->meshes[0].material->diffuse_color = glm::vec4(1.0f, 0.7f, 0.2f, 1.0f);
+	ogl::Material* sphere_material = sphere_mesh_renderer.model->meshes[0].material;
+	sphere_material->overlay_color = glm::vec4(1.0f, 0.7f, 0.2f, 1.0f);
+	sphere_material->shininess = 32;
+	sphere_material->specular_strength = 5.0f;
 
 	entt::entity ground = scene->get_registry().create();
 	ogl::TransformComponent& ground_transform = scene->get_registry().emplace<ogl::TransformComponent>(ground);
 	ogl::MeshRendererComponent& ground_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(ground);
 	ground_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/plane", ogl::ModelFileType_Obj);
-	ground_mesh_renderer.model->meshes[0].material->diffuse_color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 	ground_transform.position = glm::vec3(5.0f, -4.0f, 0.0f);
 	ground_transform.scale = glm::vec3(10.0f, 1.0f, 10.0f);
+	ogl::Material* ground_material = ground_mesh_renderer.model->meshes[0].material;
+	ground_material->overlay_color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+	ground_material->shininess = 16;
+	ground_material->specular_strength = 0.5f;
 
-	entt::entity point_light = scene->get_registry().create();
-	ogl::LightComponent& point_light_comp = scene->get_registry().emplace<ogl::LightComponent>(point_light);
-	ogl::TransformComponent& point_light_transform = scene->get_registry().emplace<ogl::TransformComponent>(point_light);
-	ogl::MeshRendererComponent& point_light_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(point_light);
+	constexpr size_t light_size = 2;
+	glm::vec3 light_positions[light_size] = { glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(-5.0f, 1.0f, -10.0f) };
+	glm::vec4 light_color[light_size] = { glm::vec4(0.7f, 0.7f, 1.0f, 1.0f), glm::vec4(1.0f, 0.7f, 0.7f, 1.0f) };
 
-	point_light_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/cube", ogl::ModelFileType_Obj);
-	point_light_mesh_renderer.uses_lights = false;
-	point_light_comp.position = glm::vec3(5.0f, 5.0f, 5.0f);
-	point_light_transform.position = glm::vec3(5.0f, 5.0f, 5.0f);
-	point_light_transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
+	for (size_t i = 0; i < light_size; i++) {
+		entt::entity point_light = scene->get_registry().create();
+		ogl::LightComponent& point_light_comp = scene->get_registry().emplace<ogl::LightComponent>(point_light);
+		ogl::TransformComponent& point_light_transform = scene->get_registry().emplace<ogl::TransformComponent>(point_light);
+		ogl::MeshRendererComponent& point_light_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(point_light);
+
+		point_light_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/cube", ogl::ModelFileType_Obj);
+		point_light_mesh_renderer.model->meshes[0].material->overlay_color = light_color[i];
+		point_light_mesh_renderer.uses_lights = false;
+		point_light_comp.position = light_positions[i];
+		point_light_comp.color = light_color[i];
+		point_light_transform.position = light_positions[i];
+		point_light_transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
+	}
+
 
 	entt::entity directional_light = scene->get_registry().create();
 	ogl::LightComponent& direction_light_comp = scene->get_registry().emplace<ogl::LightComponent>(directional_light);
 	direction_light_comp.type = ogl::LightType_Directional;
 	direction_light_comp.ambient_color = camera_comp.clear_color;
 	direction_light_comp.direction = glm::vec3(-4.0f, -10.0f, -5.0f);
-
-	ogl::SceneManager::get()->get_active_scene()->push_system<BasicCameraController>(camera_comp);
 }

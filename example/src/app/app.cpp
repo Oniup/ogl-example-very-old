@@ -19,23 +19,18 @@ public:
 		if (ogl::Input::pressed_key(ogl::InputKeyCode_S)) {
 			m_camera->position -= move_speed * m_camera->forward * ogl::Time::get_delta();
 		}
-
 		if (ogl::Input::pressed_key(ogl::InputKeyCode_W)) {
 			m_camera->position += move_speed * m_camera->forward * ogl::Time::get_delta();
 		}
-
 		if (ogl::Input::pressed_key(ogl::InputKeyCode_D)) {
 			m_camera->position += move_speed * glm::cross(m_camera->forward, m_camera->up) * ogl::Time::get_delta();
 		}
-
 		if (ogl::Input::pressed_key(ogl::InputKeyCode_A)) {
 			m_camera->position -= move_speed * glm::cross(m_camera->forward, m_camera->up) * ogl::Time::get_delta();
 		}
-
 		if (ogl::Input::pressed_key(ogl::InputKeyCode_LeftControl)) {
 			m_camera->position.y -= move_speed * ogl::Time::get_delta();
 		}
-
 		if (ogl::Input::pressed_key(ogl::InputKeyCode_Space)) {
 			m_camera->position.y += move_speed * ogl::Time::get_delta();
 		}
@@ -74,9 +69,6 @@ App::App() : ogl::Application() {
 	ogl::Window* window_layer = static_cast<ogl::Window*>(get_layer(OGL_RENDERER_WINDOW_LAYER_NAME));
 
 	ogl::Pipeline::get()->push_renderer(new ogl::BasicRenderer());
-	ogl::Pipeline::get()->set_render_mode(ogl::PipelineRenderMode_WireFrame);
-
-	ogl::Texture* texture = ogl::AssetHandler::get()->load_texture_into_memory("container", "example/assets/textures/container.png");
 
 	ogl::SceneManager::get()->push("empty scene");
 	ogl::SceneManager::get()->set_active("empty scene");
@@ -89,23 +81,48 @@ App::App() : ogl::Application() {
 	camera_comp.projection_matrix = glm::perspective(
 		glm::radians(45.0f), static_cast<float>(window_layer->get_width()) / static_cast<float>(window_layer->get_height()), 0.1f, 100.0f
 	);
-	camera_comp.clear_color = glm::vec4(0.2f, 0.5f, 0.9f, 1.0f);
+	camera_comp.clear_color = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
 
 	entt::entity backpack = scene->get_registry().create();
 	ogl::TransformComponent& backpack_transform = scene->get_registry().emplace<ogl::TransformComponent>(backpack);
-	ogl::ModelRendererComponent& backpack_model_renderer = scene->get_registry().emplace<ogl::ModelRendererComponent>(backpack);
-	backpack_model_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("example/assets/models/backpack", ogl::ModelFileType_Obj);
+	ogl::MeshRendererComponent& backpack_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(backpack);
+	backpack_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("example/assets/models/backpack", ogl::ModelFileType_Obj);
 	backpack_transform.rotation = glm::vec4(0.0f, 1.0f, 0.0f, -90.0f);
 	backpack_transform.position.x = 8.0f;
 	backpack_transform.position.z = -2.0f;
 
-	entt::entity cube = scene->get_registry().create();
-	ogl::TransformComponent& cube_transform = scene->get_registry().emplace<ogl::TransformComponent>(cube);
-	ogl::ModelRendererComponent& cube_model_renderer = scene->get_registry().emplace<ogl::ModelRendererComponent>(cube);
-	cube_model_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/cube", ogl::ModelFileType_Obj);
-	cube_model_renderer.model->meshes[0].material->textures.push_back(std::make_tuple(texture, ogl::MaterialTextureType_Diffuse));
-	cube_transform.position.x = 8.0f;
-	cube_transform.position.z = 2.0f;
+	entt::entity sphere = scene->get_registry().create();
+	ogl::TransformComponent& sphere_transform = scene->get_registry().emplace<ogl::TransformComponent>(sphere);
+	ogl::MeshRendererComponent& sphere_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(sphere);
+	sphere_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/sphere", ogl::ModelFileType_Obj);
+	sphere_transform.position.x = 8.0f;
+	sphere_transform.position.z = 2.0f;
+	sphere_mesh_renderer.model->meshes[0].material->diffuse_color = glm::vec4(1.0f, 0.7f, 0.2f, 1.0f);
+
+	entt::entity ground = scene->get_registry().create();
+	ogl::TransformComponent& ground_transform = scene->get_registry().emplace<ogl::TransformComponent>(ground);
+	ogl::MeshRendererComponent& ground_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(ground);
+	ground_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/plane", ogl::ModelFileType_Obj);
+	ground_mesh_renderer.model->meshes[0].material->diffuse_color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+	ground_transform.position = glm::vec3(5.0f, -4.0f, 0.0f);
+	ground_transform.scale = glm::vec3(10.0f, 1.0f, 10.0f);
+
+	entt::entity point_light = scene->get_registry().create();
+	ogl::LightComponent& point_light_comp = scene->get_registry().emplace<ogl::LightComponent>(point_light);
+	ogl::TransformComponent& point_light_transform = scene->get_registry().emplace<ogl::TransformComponent>(point_light);
+	ogl::MeshRendererComponent& point_light_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(point_light);
+
+	point_light_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/cube", ogl::ModelFileType_Obj);
+	point_light_mesh_renderer.uses_lights = false;
+	point_light_comp.position = glm::vec3(5.0f, 5.0f, 5.0f);
+	point_light_transform.position = glm::vec3(5.0f, 5.0f, 5.0f);
+	point_light_transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
+
+	entt::entity directional_light = scene->get_registry().create();
+	ogl::LightComponent& direction_light_comp = scene->get_registry().emplace<ogl::LightComponent>(directional_light);
+	direction_light_comp.type = ogl::LightType_Directional;
+	direction_light_comp.ambient_color = camera_comp.clear_color;
+	direction_light_comp.direction = glm::vec3(-4.0f, -10.0f, -5.0f);
 
 	ogl::SceneManager::get()->get_active_scene()->push_system<BasicCameraController>(camera_comp);
 }

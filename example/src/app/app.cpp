@@ -82,8 +82,6 @@ App::App() : ogl::Application() {
 	);
 	camera_comp.clear_color = glm::vec4(0.05f, 0.1f, 0.2f, 1.0f);
 
-	scene->push_system<BasicCameraController>(camera_comp);
-
 	entt::entity backpack = scene->get_registry().create();
 	ogl::TransformComponent& backpack_transform = scene->get_registry().emplace<ogl::TransformComponent>(backpack);
 	ogl::MeshRendererComponent& backpack_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(backpack);
@@ -119,29 +117,25 @@ App::App() : ogl::Application() {
 	ground_material->shininess = 16;
 	ground_material->specular_strength = 0.5f;
 
-	constexpr size_t light_size = 2;
-	glm::vec3 light_positions[light_size] = { glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(-5.0f, 1.0f, -10.0f) };
-	glm::vec4 light_color[light_size] = { glm::vec4(0.7f, 0.7f, 1.0f, 1.0f), glm::vec4(1.0f, 0.7f, 0.7f, 1.0f) };
+	entt::entity point_light = scene->get_registry().create();
+	ogl::LightComponent& point_light_comp = scene->get_registry().emplace<ogl::LightComponent>(point_light);
+	ogl::TransformComponent& point_light_transform = scene->get_registry().emplace<ogl::TransformComponent>(point_light);
+	ogl::MeshRendererComponent& point_light_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(point_light);
 
-	for (size_t i = 0; i < light_size; i++) {
-		entt::entity point_light = scene->get_registry().create();
-		ogl::LightComponent& point_light_comp = scene->get_registry().emplace<ogl::LightComponent>(point_light);
-		ogl::TransformComponent& point_light_transform = scene->get_registry().emplace<ogl::TransformComponent>(point_light);
-		ogl::MeshRendererComponent& point_light_mesh_renderer = scene->get_registry().emplace<ogl::MeshRendererComponent>(point_light);
-
-		point_light_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/cube", ogl::ModelFileType_Obj);
-		point_light_mesh_renderer.model->meshes[0].material->overlay_color = light_color[i];
-		point_light_mesh_renderer.uses_lights = false;
-		point_light_comp.position = light_positions[i];
-		point_light_comp.color = light_color[i];
-		point_light_transform.position = light_positions[i];
-		point_light_transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
-	}
-
+	point_light_mesh_renderer.model = ogl::AssetHandler::get()->load_model_into_memory("ogl/assets/models/cube", ogl::ModelFileType_Obj);
+	point_light_mesh_renderer.model->meshes[0].material->overlay_color = glm::vec4(1.0f, 0.7f, 0.7f, 1.0f);
+	point_light_mesh_renderer.uses_lights = false;
+	point_light_comp.position = glm::vec3(5.0f, 2.0f, -5.0f);
+	point_light_comp.color = glm::vec4(1.0f, 0.7f, 0.7f, 1.0f);
+	point_light_transform.position = glm::vec3(5.0f, 2.0f, -5.0f);
+	point_light_transform.scale = glm::vec3(0.2f, 0.2f, 0.2f);
 
 	entt::entity directional_light = scene->get_registry().create();
 	ogl::LightComponent& direction_light_comp = scene->get_registry().emplace<ogl::LightComponent>(directional_light);
 	direction_light_comp.type = ogl::LightType_Directional;
+	direction_light_comp.color = camera_comp.clear_color * 1.2f;
 	direction_light_comp.ambient_color = camera_comp.clear_color;
-	direction_light_comp.direction = glm::vec3(-4.0f, -10.0f, -5.0f);
+	direction_light_comp.direction = glm::vec3(-0.5f, 0.7f, -0.3f);
+
+	scene->push_system<BasicCameraController>(camera_comp);
 }
